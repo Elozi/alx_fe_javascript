@@ -65,21 +65,59 @@ let quotes = [
     document.body.appendChild(formDiv);
   }
   
-  // Add a new quote to the array and update storage
-  function addQuote() {
+  // Add a new quote to the array, update storage, and post to server
+  async function addQuote() {
     const quoteText = document.getElementById('newQuoteText').value.trim();
     const quoteCategory = document.getElementById('newQuoteCategory').value.trim();
   
     if (quoteText && quoteCategory) {
-      quotes.push({ text: quoteText, category: quoteCategory });
+      const newQuote = { text: quoteText, category: quoteCategory };
+      quotes.push(newQuote);
       saveQuotes();
       populateCategories();
       filterQuotes();
       document.getElementById('newQuoteText').value = '';
       document.getElementById('newQuoteCategory').value = '';
+      
+      // Post the new quote to the server
+      await postQuoteToServer(newQuote);
+      
       alert('Quote added successfully!');
     } else {
       alert('Please enter both a quote and a category.');
+    }
+  }
+  
+  // Post a quote to the server using JSONPlaceholder
+  async function postQuoteToServer(quote) {
+    try {
+      const response = await fetch('https://jsonplaceholder.typicode.com/posts', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          title: quote.text,
+          body: quote.category,
+          userId: 1 // Required by JSONPlaceholder
+        })
+      });
+      if (response.ok) {
+        const notification = document.createElement('p');
+        notification.textContent = 'Quote successfully sent to server!';
+        notification.style.color = 'green';
+        document.body.appendChild(notification);
+        setTimeout(() => document.body.removeChild(notification), 3000);
+      } else {
+        throw new Error('Failed to post quote to server');
+      }
+    } catch (error) {
+      console.error('Error posting quote to server:', error);
+      const notification = document.createElement('p');
+      notification.textContent = 'Failed to send quote to server.';
+      notification.style.color = 'red';
+      document.body.appendChild(notification);
+      setTimeout(() => document.body.removeChild(notification), 3000);
     }
   }
   
@@ -141,7 +179,7 @@ let quotes = [
   // Import quotes from a JSON file
   function importFromJsonFile(event) {
     const fileReader = new FileReader();
-    fileReader.onload = function(event) {
+    fileReader.onload = async function(event) {
       try {
         const importedQuotes = JSON.parse(event.target.result);
         if (Array.isArray(importedQuotes)) {
@@ -149,6 +187,10 @@ let quotes = [
           saveQuotes();
           populateCategories();
           filterQuotes();
+          // Post imported quotes to server
+          for (const quote of importedQuotes) {
+            await postQuoteToServer(quote);
+          }
           alert('Quotes imported successfully!');
         } else {
           alert('Invalid JSON format. Please upload a valid quotes file.');
@@ -176,8 +218,8 @@ let quotes = [
     }
   }
   
-  // Simulate server interaction and sync data
-  async function syncWithServer() {
+  // Sync quotes with the server and handle conflicts
+  async function syncQuotes() {
     try {
       const formattedServerQuotes = await fetchQuotesFromServer();
       
@@ -190,27 +232,47 @@ let quotes = [
         return;
       }
   
-      // Simple conflict resolution: Server data takes precedence
+      // Conflict resolution: Server data takes precedence for new quotes
       const localQuoteTexts = new Set(quotes.map(q => q.text));
       const newQuotes = formattedServerQuotes.filter(q => !localQuoteTexts.has(q.text));
       
       if (newQuotes.length > 0) {
-        quotes.push(...newQuotes);
+        // Check for conflicts (e.g., duplicate quotes with different categories)
+        const conflicts = [];
+        newQuotes.forEach(serverQuote => {
+          const existingQuote = quotes.find(q => q.text === serverQuote.text && q.category !== serverQuote.category);
+          if (existingQuote) {
+            conflicts.push({ local: existingQuote, server: serverQuote });
+          }
+        });
+  
+        // Resolve conflicts: Update local quotes with server data
+        conflicts.forEach(conflict => {
+          const index = quotes.findIndex(q => q.text === conflict.local.text);
+          quotes[index] = conflict.server; // Server data takes precedence
+        });
+  
+        // Add new quotes
+        quotes.push(...newQuotes.filter(q => !conflicts.some(c => c.server.text === q.text)));
         saveQuotes();
         populateCategories();
         filterQuotes();
         
-        // Notify user of sync
+        // Notify user of sync and conflicts
         const notification = document.createElement('p');
-        notification.textContent = `${newQuotes.length} new quotes synced from server!`;
+        let message = `${newQuotes.length} new quotes synced from server!`;
+        if (conflicts.length > 0) {
+          message += ` ${conflicts.length} conflicts resolved (server data applied).`;
+        }
+        notification.textContent = message;
         notification.style.color = 'green';
         document.body.appendChild(notification);
         setTimeout(() => document.body.removeChild(notification), 3000);
       }
     } catch (error) {
-      console.error('Error syncing with server:', error);
+      console.error('Error syncing quotes:', error);
       const notification = document.createElement('p');
-      notification.textContent = 'Failed to sync with server.';
+      notification.textContent = 'Failed to sync quotes with server.';
       notification.style.color = 'red';
       document.body.appendChild(notification);
       setTimeout(() => document.body.removeChild(notification), 3000);
@@ -237,7 +299,7 @@ let quotes = [
       <button onclick="exportToJsonFile()">Export Quotes</button>
       <input type="file" id="importFile" accept=".json" onchange="importFromJsonFile(event)" />
     `;
-    document.body.appendChild(ioDiv);
+    document.body.append(lioDiv);
   
     // Create add quote form
     createAddQuoteForm();
@@ -256,7 +318,7 @@ let quotes = [
     }
   
     // Set up periodic server sync (every 30 seconds)
-    setInterval(syncWithServer, 30000);
+    setInterval(syncQuotes, 30000);
   }
   
   // Run initialization when the DOM is fully loaded
