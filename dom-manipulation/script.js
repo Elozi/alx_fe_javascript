@@ -8,11 +8,19 @@ let quotes = [
     { text: "The unexamined life is not worth living.", category: "Philosophy" }
   ];
   
+  // Variable to store the currently selected category
+  let selectedCategory = 'all';
+  
   // Load quotes from local storage on initialization
   function loadQuotes() {
     const storedQuotes = localStorage.getItem('quotes');
     if (storedQuotes) {
       quotes = JSON.parse(storedQuotes);
+    }
+    // Load selected category from local storage
+    const storedCategory = localStorage.getItem('selectedCategory');
+    if (storedCategory) {
+      selectedCategory = storedCategory;
     }
     populateCategories();
     filterQuotes();
@@ -25,10 +33,9 @@ let quotes = [
   
   // Show a random quote based on the selected category
   function showRandomQuote() {
-    const categoryFilter = document.getElementById('categoryFilter').value;
-    const filteredQuotes = categoryFilter === 'all' 
+    const filteredQuotes = selectedCategory === 'all' 
       ? quotes 
-      : quotes.filter(quote => quote.category === categoryFilter);
+      : quotes.filter(quote => quote.category === selectedCategory);
     
     if (filteredQuotes.length === 0) {
       document.getElementById('quoteDisplay').innerHTML = '<p>No quotes available for this category.</p>';
@@ -89,21 +96,19 @@ let quotes = [
       categoryFilter.appendChild(option);
     });
   
-    // Restore last selected filter from local storage
-    const lastFilter = localStorage.getItem('lastCategoryFilter');
-    if (lastFilter && uniqueCategories.includes(lastFilter)) {
-      categoryFilter.value = lastFilter;
-    }
+    // Set the dropdown to the current selectedCategory
+    categoryFilter.value = selectedCategory;
   }
   
   // Filter quotes based on the selected category
   function filterQuotes() {
     const categoryFilter = document.getElementById('categoryFilter').value;
-    localStorage.setItem('lastCategoryFilter', categoryFilter);
+    selectedCategory = categoryFilter;
+    localStorage.setItem('selectedCategory', selectedCategory);
     
-    const filteredQuotes = categoryFilter === 'all' 
+    const filteredQuotes = selectedCategory === 'all' 
       ? quotes 
-      : quotes.filter(quote => quote.category === categoryFilter);
+      : quotes.filter(quote => quote.category === selectedCategory);
     
     const quoteDisplay = document.getElementById('quoteDisplay');
     quoteDisplay.innerHTML = '';
@@ -197,7 +202,7 @@ let quotes = [
   
   // Initialize the application
   function init() {
-    // Load quotes from local storage
+    // Load quotes and selected category
     loadQuotes();
   
     // Create category filter dropdown
