@@ -114,7 +114,7 @@ let quotes = [
     } catch (error) {
       console.error('Error posting quote to server:', error);
       const notification = document.createElement('p');
-      notification.textContent = 'Failed to send quote to server.';
+      notification.textContent = 'Failed to sendArticle continues... quote to server.';
       notification.style.color = 'red';
       document.body.appendChild(notification);
       setTimeout(() => document.body.removeChild(notification), 3000);
@@ -260,7 +260,7 @@ let quotes = [
         
         // Notify user of sync and conflicts
         const notification = document.createElement('p');
-        let message = `${newQuotes.length} new quotes synced from server!`;
+        let message = "Quotes synced with server!";
         if (conflicts.length > 0) {
           message += ` ${conflicts.length} conflicts resolved (server data applied).`;
         }
@@ -299,7 +299,7 @@ let quotes = [
       <button onclick="exportToJsonFile()">Export Quotes</button>
       <input type="file" id="importFile" accept=".json" onchange="importFromJsonFile(event)" />
     `;
-    document.body.append(lioDiv);
+    document.body.appendChild(ioDiv);
   
     // Create add quote form
     createAddQuoteForm();
