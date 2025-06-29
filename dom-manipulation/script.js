@@ -160,18 +160,35 @@ let quotes = [
     fileReader.readAsText(event.target.files[0]);
   }
   
-  // Simulate server interaction using JSONPlaceholder
-  async function syncWithServer() {
+  // Fetch quotes from the server (JSONPlaceholder)
+  async function fetchQuotesFromServer() {
     try {
-      // Fetch quotes from server
       const response = await fetch('https://jsonplaceholder.typicode.com/posts');
       const serverQuotes = await response.json();
-      
       // Simulate server quotes as { text, category }
-      const formattedServerQuotes = serverQuotes.slice(0, 5).map(post => ({
+      return serverQuotes.slice(0, 5).map(post => ({
         text: post.title,
         category: 'Server'
       }));
+    } catch (error) {
+      console.error('Error fetching quotes from server:', error);
+      return [];
+    }
+  }
+  
+  // Simulate server interaction and sync data
+  async function syncWithServer() {
+    try {
+      const formattedServerQuotes = await fetchQuotesFromServer();
+      
+      if (formattedServerQuotes.length === 0) {
+        const notification = document.createElement('p');
+        notification.textContent = 'Failed to fetch quotes from server.';
+        notification.style.color = 'red';
+        document.body.appendChild(notification);
+        setTimeout(() => document.body.removeChild(notification), 3000);
+        return;
+      }
   
       // Simple conflict resolution: Server data takes precedence
       const localQuoteTexts = new Set(quotes.map(q => q.text));
