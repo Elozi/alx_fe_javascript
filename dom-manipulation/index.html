@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dynamic Quote Generator</title>
+
+  <!-- Minimal inline styling just for clarity -->
+  <style>
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      margin: 40px;
+      max-width: 640px;
+    }
+    #quoteDisplay {
+      margin: 20px 0;
+      padding: 20px;
+      border: 1px solid #ccc;
+      background: #f3f3f3;
+      min-height: 60px;
+      font-size: 18px;
+    }
+    input, select, button {
+      margin: 4px 2px;
+      padding: 6px 10px;
+      font-size: 14px;
+    }
+    button {
+      cursor: pointer;
+    }
+    h3 {
+      margin-top: 32px;
+      margin-bottom: 8px;
+    }
+    #syncNotice {
+      font-size: 0.8rem;
+      color: #777;
+      margin-left: 6px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Dynamic Quote Generator</h1>
+
+  <!-- Task 2: Category filter -->
+  <label for="categoryFilter">Filter:</label>
+  <select id="categoryFilter" onchange="filterQuotes()">
+    <option value="all">All Categories</option>
+    <!-- JS will append unique categories here -->
+  </select>
+
+  <!-- Quote display + random button (Task 0) -->
+  <div id="quoteDisplay">Click “Show New Quote” to begin.</div>
+  <button id="newQuote">Show New Quote</button>
+
+  <!-- Form to add a quote (Task 0 / Task 1) -->
+  <h3>Add a New Quote</h3>
+  <input id="newQuoteText" type="text" placeholder="Enter a new quote" />
+  <input id="newQuoteCategory" type="text" placeholder="Enter quote category" />
+  <button onclick="addQuote()">Add Quote</button>
+
+  <!-- JSON Import / Export (Task 1) -->
+  <h3>Import / Export Quotes</h3>
+  <input
+    type="file"
+    id="importFile"
+    accept=".json"
+    onchange="importFromJsonFile(event)"
+  />
+  <button onclick="exportToJsonFile()">Export Quotes</button>
+
+  <!-- Task 3: show sync status -->
+  <small id="syncNotice"></small>
+
+  <!-- Main logic -->
+  <script src="script.js"></script>
+</body>
+</html>
